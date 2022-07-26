@@ -1,4 +1,4 @@
-# This source file is part of the chiraltub project, made by Jose M. de Albornoz Caratozzolo and Felipe Cervantes Sodi
+# This source file is part of the chiraltube project, made by Jose M. de Albornoz Caratozzolo and Felipe Cervantes Sodi
 # This source code is released under the 3-Clause BSD License, see "LICENSE.txt".
 
 import sys
@@ -457,13 +457,13 @@ def main():
 
 if __name__== "__main__":
     if ("-h" in opts) or ("--h" in opts) or ("-help" in opts):
-        print("\nChiraltub prints atomic coordinates for different structures in special .xyz files for their usage in other visualization, simulation or calculation software.")
+        print("\nChiraltube prints atomic coordinates for different structures in special .xyz files for their usage in other visualization, simulation or calculation software.")
         print("This source code is released under the 3-Clause BSD License, see 'LICENSE.txt'")
         print("Created by José M. de Albornoz-Caratozzolo and Felipe Cervantes-Sodi.")
-        print("\nUsage: \n\t\t python3 ~/chiraltub.py <input file> [<output file>] [<options>]")
+        print("\nUsage: \n\t\t python3 ~/chiraltube.py <input file> [<output file>] [<options>]")
         print("\n If an output file is not specified, an automatically generated name will be used: './Ribbon_n-m.xyz' or './Nanotube_n-m.xyz', accordingly.")
         print("The input file must contain the unit cell from which you want to create a nanotube or nanoribbon. It must be in special .xyz format or in the .in format used for Quantum Espresso.")
-        print("NOTE: For the moment, Chiraltub only accepts cartesian coordinates in angstroms.")
+        print("NOTE: For the moment, Chiraltube only accepts cartesian coordinates in angstroms.")
         print("\nOPTIONS: (by order of program execution)")
         print("\tOption \t\tResult\n")
         print("\t-h / -help / --h \tPrints this help message\n")
@@ -478,7 +478,7 @@ if __name__== "__main__":
     try:
         arch_in=args[0]
     except IndexError:
-        print("\n***ERROR*** No input file specified.\nType 'python3 chiraltub.py -h' for more help.")
+        print("\n***ERROR*** No input file specified.\nType 'python3 chiraltube.py -h' for more help.")
         sys.exit()
     try: nat, A, UnitCell =read_arch(arch_in)
     except FileNotFoundError:
