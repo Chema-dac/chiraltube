@@ -6,6 +6,7 @@ import math
 import random as rd
 import statistics as stat
 
+
 opts = [opt for opt in sys.argv[1:] if opt.startswith("-")]
 args = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
 
@@ -159,7 +160,7 @@ def eliminate(Arr, n, m, x, y):
             nuevo_Arr.append(ele)
     return nuevo_Arr, disy, disx
 
-def coordinates(n, m, x, y, prt=1, arch_out=False, grf=False):
+def coordinates_xyz(n, m, x, y, prt=1, arch_out=False, grf=False):
     '''Does all the steps necessary to get a nanoribbon with chiral indices (n,m) and translational indices (x,y). If "prt"=1, it prints the completed steps. It automatically prints to file "arch_out", defaults to "./Ribbon_n-m.xyz".'''
     if not arch_out:
         arch_out= "./Ribbon_{}-{}.xyz".format(n,m)
@@ -182,6 +183,47 @@ def coordinates(n, m, x, y, prt=1, arch_out=False, grf=False):
             print("{}    {}    {}    {}".format(ele.ele, ele.x, ele.y, ele.z), file=outfile)
     if grf:
         testgraph(Arr)
+
+def coordinates_VASP(n, m, x, y, prt=1, arch_out=False, grf=False):
+    '''Does all the steps necessary to get a nanoribbon with chiral indices (n,m) and translational indices (x,y). If "prt"=1, it prints the completed steps. It automatically prints to file "arch_out", defaults to "./Ribbon_n-m.xyz".'''
+    if not arch_out:
+        arch_out= "POSCAR"
+    theta, Res = robtainxy(n, m)
+    if prt==1:
+        print("\nChiral angle obtained correctly: Theta=", math.degrees(theta), "\n")
+    Arr=arr_initial(n, m, x, y)
+    if prt==1:
+        print("Initial array correctly created\n")
+    Arr= rotate(Arr, theta)
+    if prt==1:
+        print("Rotation succesfully completed\n")
+    Arr, disy, disx = eliminate(Arr, n, m, x, y)
+    if prt==1:
+        print("Ribbon created correctly, {} atoms in total.".format(len(Arr)))
+    with open(arch_out, mode = 'w') as outfile:
+        print("Nanoribbon (n,m)=({},{})".format(n, m), file=outfile)
+        print(1, file=outfile)
+        print("{} 0.0 0.0".format(disx), file=outfile)
+        print("0.0 {} 0.0".format(disy), file=outfile)
+        print("0.0 0.0 {}".format(a3.z), file=outfile)
+        unique_elements = []
+        for atom in Arr:
+            if atom.ele not in unique_elements:
+                unique_elements.append(atom.ele)
+        Arr_divided=[[atom for atom in Arr if atom.ele==element] for element in unique_elements]
+        ele_names=""
+        ele_numbers=""
+        for i in range(len(unique_elements)):
+            ele_names=ele_names+unique_elements[i]+' '
+            ele_numbers = ele_numbers + str(len(Arr_divided[i]))+' '
+        print(ele_names.strip(), file=outfile)
+        print(ele_numbers.strip(), file=outfile)
+        print('Cartesian', file=outfile)
+        for ele in Arr_divided:
+            for atom in ele:
+                print("{} {} {}".format(atom.x, atom.y, atom.z), file=outfile)
+    if grf:
+        testgraph(Arr)
         
 def nanotube(Arr, n, m, z_med=False):
     '''Rolls the ribbon into a nanotube with chiral indices (n,m). "z_med" determines the central plane, defaults to a_3/2. Returns the new array and the NT radius.'''
@@ -198,7 +240,7 @@ def nanotube(Arr, n, m, z_med=False):
         ele.z=tmpy
     return Arr, radio
 
-def coordinatesNT(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
+def coordinatesNT_xyz(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
     '''Does all the steps necessary to get a nanotube with chiral indices (n,m) and translational indices (x,y), repeated along the NT axis "repeat" times. If "prt"=1, it prints the completed steps. It automatically prints to file "arch_out", defaults to "./Nanotube_n-m.xyz".'''
     extra=""
     theta, Res = robtainxy(n, m)
@@ -234,6 +276,53 @@ def coordinatesNT(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
         print("0.0\t{}\t0.0".format(2*radio), file=outfile)
         print("0.0\t0.0\t{}".format(disy*(rep+1)), file=outfile)
         print("cartesian coordinates", file=outfile)
+    if grf:
+        testgraph(Arr)
+
+def coordinatesNT_VASP(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
+    '''Does all the steps necessary to get a nanotube with chiral indices (n,m) and translational indices (x,y), repeated along the NT axis "repeat" times. If "prt"=1, it prints the completed steps. It automatically prints to file "arch_out", defaults to "./Nanotube_n-m.xyz".'''
+    theta, Res = robtainxy(n, m)
+    if prt==1:
+        print("\nChiral angle obtained correctly: Theta=", math.degrees(theta), "\n")
+    Arr=arr_initial(n, m, x, y)
+    if prt==1:
+        print("Initial array correctly created\n")
+    Arr= rotate(Arr, theta)
+    if prt==1:
+        print("Rotation succesfully completed\n")
+    Arr, disy, disx = eliminate(Arr, n, m, x, y)
+    if prt==1:
+        print("Ribbon created correctly, {} atoms in total.\n".format(len(Arr)))
+    Arr, radio=nanotube(Arr, n, m)
+    if prt==1:
+        print("Nanotube created correctly, {} atoms in total.\n".format(len(Arr)))
+    if rep!=0:
+        Arr=repeat(Arr, disy, rep)
+        print("Nanotube repeated correctly {} times, {} atoms in total.\n".format(rep, len(Arr)))
+    if not arch_out:
+        arch_out= "POSCAR"    
+    with open(arch_out, mode = 'w') as outfile:
+        print("NT (n,m)=({},{}). T(x,y)=({},{})".format(n, m, x,y), file=outfile)
+        print(1, file=outfile)
+        print("{} 0.0 0.0".format(2*radio), file=outfile)
+        print("0.0 {} 0.0".format(2*radio), file=outfile)
+        print("0.0 0.0 {}".format(disy*(rep+1)), file=outfile)
+        unique_elements = []
+        for atom in Arr:
+            if atom.ele not in unique_elements:
+                unique_elements.append(atom.ele)
+        Arr_divided=[[atom for atom in Arr if atom.ele==element] for element in unique_elements]
+        ele_names=""
+        ele_numbers=""
+        for i in range(len(unique_elements)):
+            ele_names=ele_names+unique_elements[i]+' '
+            ele_numbers = ele_numbers + str(len(Arr_divided[i]))+' '
+        print(ele_names.strip(), file=outfile)
+        print(ele_numbers.strip(), file=outfile)
+        print('Cartesian', file=outfile)
+        for ele in Arr_divided:
+            for atom in ele:
+                print("{} {} {}".format(atom.x, atom.y, atom.z), file=outfile)
     if grf:
         testgraph(Arr)
         
@@ -279,10 +368,48 @@ def printcoords(Arr, file_name, comment):
             print("{}    {}    {}    {}".format(ele.ele, ele.x, ele.y, ele.z), file=outfile)
 
 
-def read_arch(arch):
+def read_arch(arch, filetype=False):
     '''Reads the input file in .in or .xyz (special) formats. Returns the number of atoms in the unit cell, the three unit vectors in an array and the atoms in the unit cell as an array.'''
     A=[]
     UnitCell=[]
+    if filetype=='VASP':
+        with open(arch, mode='r') as infile:
+            infile.readline()
+            scale = float(infile.readline().strip())
+            for _ in range(3):
+                valores= infile.readline().strip().split()
+                A.append(point3d(float(valores[0])*scale, float(valores[1])*scale, float(valores[2])*scale, 'Vector'))
+            line = infile.readline().strip()
+            element_numbers = []
+            try:
+                for number in line.split():
+                    tmp = int(number)
+                print("\n***ERROR*** No line with species names. Please specify the species.\n")
+                sys.exit()
+            except ValueError:
+                element_names = line.split()
+            for number in infile.readline().strip().split():
+                element_numbers.append(int(number))
+            nat=sum(element_numbers)
+            line=infile.readline().strip()
+            if (line.startswith("s") or line.startswith("S")):
+                line = infile.readline().strip()
+            if  line == 'Direct' or line=='direct':
+                for ele_no in range(len(element_names)):
+                    for _ in range(element_numbers[ele_no]):
+                        valores = infile.readline().strip().split()
+                        position = a1*valores[0] + a2*valores[1] + a3*valores[2]
+                        UnitCell.append(point3d(position.x, position.y, position.z, element_names[ele_no]))
+            elif line == 'Cartesian' or line=='cartesian':
+                for ele_no in range(len(element_names)):
+                    for _ in range(element_numbers[ele_no]):
+                        valores = infile.readline().strip().split()
+                        UnitCell.append(point3d(float(valores[0]), float(valores[1]), float(valores[2]), element_names[ele_no]))     
+            else:
+                print("\n***ERROR*** Coordinates can only be in 'Direct' format or 'Cartesian' format.\n {} format is not recognized\n".format(line))
+                sys.exit()
+            return nat, A, UnitCell
+                    
     if arch.endswith(".in"):
         with open(arch, mode='r') as infile:
             for line in infile:
@@ -446,11 +573,17 @@ def main():
         sys.exit
     x= round(x)
     y= round(y)
-    
-    if ribbon:
-        coordinates(n,m,x,y,arch_out=arch_out, grf=False)
+
+    if "-VASPout" in opts:
+        if ribbon:
+            coordinates_VASP(n,m,x,y,arch_out=arch_out, grf=False)
+        else:
+            coordinatesNT_VASP(n,m,x,y,rep=r, arch_out=arch_out, grf=False)
     else:
-        coordinatesNT(n,m,x,y,rep=r, arch_out=arch_out, grf=False)
+        if ribbon:
+            coordinates_xyz(n,m,x,y,arch_out=arch_out, grf=False)
+        else:
+            coordinatesNT_xyz(n,m,x,y,rep=r, arch_out=arch_out, grf=False)
         
 
 
@@ -480,7 +613,10 @@ if __name__== "__main__":
     except IndexError:
         print("\n***ERROR*** No input file specified.\nType 'python3 chiraltube.py -h' for more help.")
         sys.exit()
-    try: nat, A, UnitCell =read_arch(arch_in)
+    filetype=False
+    if "-VASPin" in opts:
+        filetype="VASP"
+    try: nat, A, UnitCell =read_arch(arch_in, filetype=filetype)
     except FileNotFoundError:
         print("\n***ERROR*** Couldn't find the file '{}'\n".format(arch_in))
         sys.exit()
