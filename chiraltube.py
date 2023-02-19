@@ -449,6 +449,21 @@ def coordinates_xyz(n, m, x, y, prt=1, arch_out=False, grf=False):
     if prt==1:
         print("Rotation succesfully completed\n")
     Arr, disy, disx = eliminate(Arr, n, m, x, y)
+    for ele in Arr:
+        displaced = point3d(0,-disy, 0,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
+    for ele in Arr:
+        displaced = point3d(-disx,0,0,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
+    for ele in Arr:
+        displaced = point3d(-disx,-disy,0,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
     if prt==1:
         print("Ribbon created correctly, {} atoms in total.".format(len(Arr)))
     with open(arch_out, mode = 'w') as outfile:
@@ -514,6 +529,21 @@ def coordinates_VASP(n, m, x, y, prt=1, arch_out=False, grf=False):
     if prt==1:
         print("Rotation succesfully completed\n")
     Arr, disy, disx = eliminate(Arr, n, m, x, y)
+    for ele in Arr:
+        displaced = point3d(0,-disy, 0,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
+    for ele in Arr:
+        displaced = point3d(-disx,0,0,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
+    for ele in Arr:
+        displaced = point3d(-disx,-disy,0,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
     if prt==1:
         print("Ribbon created correctly, {} atoms in total.".format(len(Arr)))
     with open(arch_out, mode = 'w') as outfile:
@@ -654,6 +684,11 @@ def coordinatesNT_xyz(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
     if prt==1:
         print("Ribbon created correctly, {} atoms in total.\n".format(len(Arr)))
     Arr, radio=nanotube(Arr, n, m)
+    for ele in Arr:
+        displaced = point3d(0,0,-disy,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
     if prt==1:
         print("Nanotube created correctly, {} atoms in total.\n".format(len(Arr)))
     if rep!=0:
@@ -739,6 +774,11 @@ def coordinatesNT_VASP(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
     if prt==1:
         print("Ribbon created correctly, {} atoms in total.\n".format(len(Arr)))
     Arr, radio=nanotube(Arr, n, m)
+    for ele in Arr:
+        displaced = point3d(0,0,-disy,'')+ ele
+        for ele2 in Arr:
+            if distance(displaced, ele2)<0.2:
+                Arr.remove(ele)
     if prt==1:
         print("Nanotube created correctly, {} atoms in total.\n".format(len(Arr)))
     if rep!=0:
