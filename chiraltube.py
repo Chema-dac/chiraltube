@@ -1296,7 +1296,7 @@ if __name__== "__main__":
         print("\nOPTIONS: (by order of program execution)")
         print("\tOption \t\tResult\n")
         print("\t-h / -help / --h \tPrints this help message\n")
-        print("\t-VASPin \t\tDenotes that the input file is in the POSCAR VASP format.\n")
+        print("\t-VASPin \tDenotes that the input file is in the POSCAR VASP format.\n")
         print("\t-p \t\tPrints atomic positions and unit vectors of the unit cell.\n\t\t\tUseful for checking if the program read \n\t\t\tthe input file correctly.\n")
         print("\t-nr \t\tGives coordinates for the nanoribbon instead of the nanotube.\n")        
         print("\t-E<num> \tChanges the acceptable error when looking for\n\t\t\tinteger solutions to the translational indices (x,y)\n\t\t\tExample: '-E0.05' changes the acceptable error to 0.05.\n\t\t\tAlso changes the error if looking for nanotubes by radius.\n")
@@ -1304,7 +1304,7 @@ if __name__== "__main__":
         print("\t-diameter \tSame as above but with diameter.")
         print("\t-r<num> \tRepeats the nanotube <num> times along its axis.\n\t\t\t<num> must be an integer.\n\t\t\tExample: '-r3' would yield a nanotube repeated 3 times.\n")
         print("\t-o \t\tPrints the (x,y) pairs that are solutions for\n\t\t\tthe (n,m) provided.\n")
-        print("\t-VASPout \t\tGives the output file in the POSCAR VASP format.\n")
+        print("\t-VASPout \tGives the output file in the POSCAR VASP format.\n")
         sys.exit()
     try:
         arch_in=args[0]
