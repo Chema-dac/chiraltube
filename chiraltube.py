@@ -1219,6 +1219,7 @@ def main():
     ribbon=False
     r=0
     Error=ERROR
+    indexoption=False
     
     if "-nr" in opts:
         ribbon=True
@@ -1247,9 +1248,18 @@ def main():
     for word in opts:
         if word.startswith("-r"):
             r= int(word.strip().replace("-r", ""))
+
+    for word in opts:
+        if word.startswith("-indexn"):
+            n, m = word.strip().replace("-indexn", "").split('m')
+            n=int(n)
+            m=int(m)
+            indexoption=True
+            print("Chiral indices read correctly, (n,m)=({},{})".format(n,m))
             
-    n= int(input("\nValue of n: "))
-    m= int(input("\nValue of m: "))
+    if not indexoption:
+        n= int(input("\nValue of n: "))
+        m= int(input("\nValue of m: "))
     
     if "-o" in opts:
         obtainxy(n,m,error=Error)
@@ -1288,7 +1298,7 @@ if __name__== "__main__":
     if ("-h" in opts) or ("--h" in opts) or ("-help" in opts):
         print("\nChiraltube prints atomic coordinates for different structures in special .xyz files for their usage in other visualization, simulation or calculation software.")
         print("This source code is released under the 3-Clause BSD License, see 'LICENSE.txt'")
-        print("Created by José M. de Albornoz-Caratozzolo and Felipe Cervantes-Sodi.")
+        print("Created by José M. de Albornoz-Caratozzolo and Felipe Cervantes-Sodi. (c) 2023")
         print("\nUsage: \n\t\t python3 ~/chiraltube.py <input file> [<output file>] [<options>]")
         print("\n If an output file is not specified, an automatically generated name will be used: './Ribbon_n-m.xyz' or './Nanotube_n-m.xyz', accordingly.")
         print("The input file must contain the unit cell from which you want to create a nanotube or nanoribbon. It must be in special .xyz format or in the .in format used for Quantum Espresso.")
@@ -1301,8 +1311,9 @@ if __name__== "__main__":
         print("\t-nr \t\tGives coordinates for the nanoribbon instead of the nanotube.\n")        
         print("\t-E<num> \tChanges the acceptable error when looking for\n\t\t\tinteger solutions to the translational indices (x,y)\n\t\t\tExample: '-E0.05' changes the acceptable error to 0.05.\n\t\t\tAlso changes the error if looking for nanotubes by radius.\n")
         print("\t-radius \tLooks for nanotubes that have a certain radius.\n\t\t\tThe program will ask for the radius desired.\n")
-        print("\t-diameter \tSame as above but with diameter.")
+        print("\t-diameter \tSame as above but with diameter.\n")
         print("\t-r<num> \tRepeats the nanotube <num> times along its axis.\n\t\t\t<num> must be an integer.\n\t\t\tExample: '-r3' would yield a nanotube repeated 3 times.\n")
+        print("\t-indexn<num1>m<num2> \tSets the chiral indices directly from command \n\t\t\t\tline. Sets n=<num1> and m=<num2>.\n\t\t\t\tExample: '-indexn5m10' yields a nanotube \n\t\t\t\twith (n,m)=(5,10)\n")
         print("\t-o \t\tPrints the (x,y) pairs that are solutions for\n\t\t\tthe (n,m) provided.\n")
         print("\t-VASPout \tGives the output file in the POSCAR VASP format.\n")
         sys.exit()
