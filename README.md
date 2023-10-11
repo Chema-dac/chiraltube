@@ -2,7 +2,7 @@
 
 Made by José María de Albornoz Caratozzolo & Felipe Cervantes Sodi.
 
-If you use this program please cite it as such:  de Albornoz-Caratozzolo & Cervantes-Sodi. Chiraltube, rolling 2D materials into chiral nanotubes. XXXXXX DOI: XXXXXX
+If you use this program please cite it as such:   J. M. de Albornoz-Caratozzolo and F. Cervantes-Sodi, Nanoscale Adv., 2023, DOI: 10.1039/D3NA00301A
 
 Chiraltube is a small python code that prints atomic coordinates for different nanotube and nanoribbon structures in special .xyz files for their usage in other visualization, simulation or calculation software.
 
