@@ -1213,7 +1213,43 @@ def do_everything(n,m,x,y, nt=True):
     radio=0
     if nt:
         Arr, radio = nanotube(Arr, n,m)
-    return Arr, disy, disx, radio       
+    return Arr, disy, disx, radio
+
+def do_everything_nm(n,m, nt=True):
+    '''
+    For testing purposes. If nt = True, makes a nanotube with C(n,m),
+    it also looks for T(x,y). If nt=False, it only makes the nanoribbon.
+    Returns the array of atoms, the height of the NT, its circumference,
+    and its radius.
+
+    Parameters
+    ----------
+    n: int
+        The first chiral index
+    m: int
+        The second chiral index
+    nt: boolean
+        If False, only makes the nanoribbon. If True, it makes the whole NT.
+
+    Returns
+    -------
+    Arr: list of point3d
+        Array containing the Nanotube or nanoribbon atoms.
+    disy: float
+        Height of the Nanotube / nanoribbon.
+    disx: float
+        Length of nanoribbon (or circumference of NT)
+    radio: float
+        Radius of the NT. Defaults to 0 if the user made a nanoribbon.
+    '''
+    theta, Res = robtainxy(n,m)
+    x,y,_,_ = Res[0]
+    x,y = round(x), round(y)
+    Arr, disy, disx = eliminate(rotate(arr_initial(n,m,x,y), theta), n,m,x,y)
+    radio=0
+    if nt:
+        Arr, radio = nanotube(Arr, n,m)
+    return Arr, disy, disx, radio  
     
 def main():
     ribbon=False
