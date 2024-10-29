@@ -1683,7 +1683,7 @@ if __name__== "__main__":
             if word=="-multiwalled":
                 mw=False
             else:
-                mw=int(word.strip().replace("-mw",""))
+                mw=int(word.strip().replace("-multiwalled",""))
     if mw==None:    
         main()
     else:
