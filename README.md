@@ -12,7 +12,7 @@ Input files should contain the unit cell of a specific 2D material in special .x
 
 Use option `-h` / `-help` for more help.
 
-###Now supports Multi-Walled Nanotube generation!
+### Now supports Multi-Walled Nanotube generation!
 If you use the option `-mw` you Will be prompted for the number of layers to build and then the chiral índices.
 
 Afterwards you Will be prompted to select a layer-scaling option these are explained here in more detail:
