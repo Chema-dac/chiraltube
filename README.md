@@ -13,9 +13,9 @@ Input files should contain the unit cell of a specific 2D material in special .x
 Use option `-h` / `-help` for more help.
 
 ### Now supports Multi-Walled Nanotube generation!
-If you use the option `-mw` you Will be prompted for the number of layers to build and then the chiral índices.
+If you use the option `-mw` you will be prompted for the number of layers to build and then the chiral indices.
 
-Afterwards you Will be prompted to select a layer-scaling option these are explained here in more detail:
+Afterwards you will be prompted to select a layer-scaling option these are explained here in more detail:
 
 * Option 1: Doesn't transform any layer, returns the full MW NT as it was first created. (Recommended if all layers have the same chirality, and therefore have the same height, e.g. both are zigzag NTs)
 * Option 2: Leaves biggest layer unchanged, all the other layers are repeated along the z-axis to surpass the biggest layer. Then they are trimmed so that they are all the same height. (Recommended if you don't care about periodicity of the full NT)
