@@ -471,6 +471,8 @@ def coordinates_xyz(n, m, x, y, prt=1, arch_out=False, grf=False):
         print("Nanoribbon (n,m)=({},{}). Y={} A, X={} A".format(n, m, disy, disx), file=outfile)
         for ele in Arr:
             print("{}    {}    {}    {}".format(ele.ele, ele.x, ele.y, ele.z), file=outfile)
+    if prt==1:
+        print("Structure saved in file {}\n".format(arch_out))
     if grf:
         testgraph(Arr)
 
@@ -568,6 +570,8 @@ def coordinates_VASP(n, m, x, y, prt=1, arch_out=False, grf=False):
         for ele in Arr_divided:
             for atom in ele:
                 print("{} {} {}".format(atom.x, atom.y, atom.z), file=outfile)
+    if prt==1:
+        print("Structure saved in file {}\n".format(arch_out))
     if grf:
         testgraph(Arr)
         
@@ -696,7 +700,7 @@ def coordinatesNT_xyz(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
         extra="x{}".format(rep+1)
         print("Nanotube repeated correctly {} times, {} atoms in total.\n".format(rep, len(Arr)))
     if not arch_out:
-        arch_out= "Nanotube_{}-{}x{}.xyz".format(n,m, extra)    
+        arch_out= "Nanotube_{}-{}{}.xyz".format(n,m, extra)    
     with open(arch_out, mode = 'w') as outfile:
         print(len(Arr), file=outfile)
         print("NT (n,m)=({},{}). z={} A, r={} A. T(x,y)=({},{})".format(n, m, disy*(rep+1), radio, x,y), file=outfile)
@@ -709,6 +713,8 @@ def coordinatesNT_xyz(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
         print("0.0\t{}\t0.0".format(2*radio), file=outfile)
         print("0.0\t0.0\t{}".format(disy*(rep+1)), file=outfile)
         print("cartesian coordinates", file=outfile)
+    if prt==1:
+        print("Structure saved in file {}\n".format(arch_out))
     if grf:
         testgraph(Arr)
 
@@ -808,6 +814,8 @@ def coordinatesNT_VASP(n, m, x, y, rep=0,prt=1, arch_out=False, grf=False):
         for ele in Arr_divided:
             for atom in ele:
                 print("{} {} {}".format(atom.x, atom.y, atom.z), file=outfile)
+    if prt==1:
+        print("Structure saved in file {}\n".format(arch_out))
     if grf:
         testgraph(Arr)
         
@@ -1250,7 +1258,176 @@ def do_everything_nm(n,m, nt=True):
     if nt:
         Arr, radio = nanotube(Arr, n,m)
     return Arr, disy, disx, radio  
-    
+
+def adjust_layers(option, NT_by_layers, Rads, Heights, mw):
+    '''
+    Adjusts the layers of the Multi-Walled NT depending on the chosen option,
+    so that the heights of every layer are the same.
+
+    Option 1: Doesn't transform any layer, returns the full MW NT as it was
+              first created. (Recommended if all layers have the same chirality,
+              and therefore have the same height, e.g. both are zigzag NTs)
+    Option 2: Leaves biggest layer unchanged, all the other layers are repeated
+              along the z-axis to surpass the biggest layer. Then they are
+              trimmed so that they are all the same height. (Recommended if
+              you don't care about periodicity of the full NT)
+    Option 3: Leaves biggest layer unchanged, all other layers are scaled up
+              along the z-axis to match the height of the biggest one.
+              (Recommended if all NT heights are very close to each other)
+    Option 4: Leaves biggest layer unchanged. Combination of option 2 and 3.
+              First repeats the smaller layers along the z-axis to get as close
+              as possible to the biggest height, then scales up or down to match
+              the remaining difference. (Recommended, although it might scale
+              too much in certain cases, losing physical plausibility)
+    Option 5: Only works with two layers for now. Looks for a combination of
+              numbers that, when repeating each layer by its corresponding
+              number, makes both layers get close enough for scaling to be
+              practical. (Recommended in most cases, preserves periodicity
+              while staying close to the original stucture. Might not find a
+              supercell, which makes it default to option 4)
+
+    Parameters
+    ----------
+    option: int
+        Determines which scaling option to execute
+    NT_by_layers: list of list of point3d
+        Contains every NT layer as an element of a list.
+    Rads: list of float
+         List containing the radii of each layer.
+    Heights: list of float
+        List containing the heights of each layer.
+    mw: int
+        The number of layers in the NT.
+
+    Returns
+    -------
+    Final_NT: list of point3d
+        Array containing the full multi-walled Nanotube atoms.
+    final_height: float
+        Height of the full multi-walled Nanotube.
+    max_radius: float
+        Radius of the outermost layer in the multiwalled NT.
+        
+    See Also
+    --------
+    find_match: returns pair of numbers that fulfill conditions for option 5
+    '''
+    Final_NT=[]
+    if option==1: ##dont repeat or scale anything
+        for i in range(mw):
+            Final_NT=Final_NT + NT_by_layers[i]
+    elif option==2: ##repeat smaller nts until they reach biggest and cut
+        max_height = max(Heights)
+        Factors = [math.ceil(max_height/x)-1 for x in Heights]
+        for i in range(mw):
+            Arr = repeat(NT_by_layers[i], Heights[i], Factors[i])
+            Final_NT= Final_NT + Arr
+        for ele in Final_NT[:]:
+            if ele.z>max_height:
+                Final_NT.remove(ele)
+    elif option==3: ##scale smallest to biggest
+        max_height=max(Heights)
+        Factors = [max_height/x for x in Heights]
+        for i in range(mw):
+            Arr = NT_by_layers[i]
+            for ele in Arr:
+                ele.z = ele.z*Factors[i]
+            Final_NT=Final_NT + Arr
+    elif option==4: ##get as close as possible and scale (auto, up or down)
+        max_height = max(Heights)
+        Factors = [max_height/x for x in Heights]
+        for i in range(mw):
+            factor_round = round(Factors[i])
+            Arr = repeat(NT_by_layers[i], Heights[i], factor_round-1)
+            for ele in Arr:
+                ele.z=ele.z*max_height/(Heights[i]*factor_round)
+            Final_NT=Final_NT + Arr
+            if Factors[i]!=1:
+                print("Repeating layer {} {} times and re-scaling by a factor of {:.4f}".format(i+1,factor_round-1, max_height/(Heights[i]*factor_round)))
+    elif option==5: ##look for supercell, then repeat and rescale accordingly
+        if mw!=2:
+            print("\n***ERROR*** Option 5 only works with 2 layers for now, defaulting to option 4\n")
+            return adjust_layers(4, NT_by_layers, Rads, Heights, mw)
+        Ordered_indices = [i[0] for i in sorted(enumerate(Heights), key=lambda x: x[1])]
+        big,small, diff = find_match(max(Heights), min(Heights), max_s=50, error=0.05)
+        if big==None:
+            print("\n***WARNING*** No supercell found, defaulting to option 4\n")
+            return adjust_layers(4, NT_by_layers, Rads, Heights, mw)
+        else:
+            print("\nApproximate Supercell found, repeating layer {} {} times and layer {} {} times".format(Ordered_indices[0]+1,small-1, Ordered_indices[1]+1, big-1))
+            Arr1 = repeat(NT_by_layers[Ordered_indices[0]], Heights[Ordered_indices[0]], small-1)
+            Arr2 = repeat(NT_by_layers[Ordered_indices[1]], Heights[Ordered_indices[1]], big-1)
+            if diff>=0:
+                print("Re-scaling layer {} by a factor of {:.4f}".format(Ordered_indices[0]+1,big*Heights[Ordered_indices[1]]/(small*Heights[Ordered_indices[0]])))
+                for ele in Arr1:
+                    ele.z=ele.z*big*Heights[Ordered_indices[1]]/(small*Heights[Ordered_indices[0]])
+            else:
+                print("Re-scaling layer {} by a factor of {:.4f}".format(Ordered_indices[1]+1,small*Heights[Ordered_indices[0]]/(big*Heights[Ordered_indices[1]])))
+                for ele in Arr2:
+                    ele.z=ele.z*small*Heights[Ordered_indices[0]]/(big*Heights[Ordered_indices[1]])
+            Final_NT=Arr1+Arr2
+    else:
+        print("\n***ERROR*** scaling options can only be 1,2,3,4 or 5\n")
+        sys.exit()
+    final_height = max(Final_NT, key=lambda x: x.z)
+    max_radius = max(Rads)
+    return Final_NT, final_height, max_radius
+            
+
+def find_match(big, small, max_b=10, max_s=100, error=0.05):
+    '''
+    Attempts to find a pair of numbers that will approximately match the height
+    of two NT layers by repeating each layer by its corresponding number.
+
+    Basically attempts to find an approximate Least Common Multiple for
+    non-integer numbers. 
+
+    Parameters
+    ----------
+    big: float
+        Height of the larger NT.
+    small: foat
+        Height of the smaller NT.
+    max_b: int
+         Maximum limit for the number that will correspond to the repetitions of
+         the larger NT. Defaults to 10.
+    max_s: int
+        Maximum limit for the number that will correspond to the repetitions of
+        the smaller NT. Defaults to 100.
+    error: float
+        Allowed error when looking for the pair of numbers. Defaults to 0.05,
+        meaning it allows a relative difference in height of 5%.
+
+    Returns
+    -------
+    big: int
+        Number corresponding to the repetitions of the larger NT.
+    small: int
+        Number corresponding to the repetitions of the smaller NT.
+    diff: float
+        Relative error in the approximation of the heights.
+        
+    See Also
+    --------
+    adjust_layers: adjusts the layers of the Multi-Walled NT depending on the
+                   chosen option, so that the heights of every layer are the
+                   same.
+    '''
+    Res=[]
+    flag=0
+    for i in range(1,max_b):
+        for j in range(1,max_s):
+            frac= small*j/(big*i)
+            if round(frac)==1 and abs(round(frac)-frac)<=error:
+                flag=1
+                Res.append((i, j,round(frac)-frac))
+    if flag==0:
+        return None, None, None
+    else:
+        Res.sort()
+        big,small,diff = Res[0]
+        return big,small,diff
+
 def main():
     ribbon=False
     r=0
@@ -1312,7 +1489,7 @@ def main():
         x, y, err, perr=Res[0]
     except IndexError:
         print("\n***ERROR*** No integer solutions found for translational indices (x,y) in the range x,y<100 \nPlease try another pair of chiral indices.")
-        sys.exit
+        sys.exit()
     x= round(x)
     y= round(y)
 
@@ -1326,8 +1503,115 @@ def main():
             coordinates_xyz(n,m,x,y,arch_out=arch_out, grf=False)
         else:
             coordinatesNT_xyz(n,m,x,y,rep=r, arch_out=arch_out, grf=False)
-        
 
+def multi_main(mw):
+    r=0
+    Error=ERROR
+    
+    
+    print("Multi-walled nanotube selected\n")
+    if mw==False:
+        mw=int(input("Number of layers to build: "))
+        
+    if mw==1:
+        print("\tNumber of layers: 1 (revert to normal program function)")
+        main()
+        sys.exit()
+    elif mw<=0:
+        print("\n***ERROR*** Number of NT layers cannot be 0 or negative.\n")
+        sys.exit()
+    else:
+        print("\tNumber of layers: {}".format(mw))
+
+    for word in opts:
+        if word.startswith("-E"):
+            Error= float(word.strip().replace("-E", ""))
+    
+    N=[]
+    M=[]
+
+    for i in range(mw):
+        print("\nLayer number {}".format(i+1))
+        n=int(input("Value of n: "))
+        m=int(input("Value of m: "))
+        N.append(n)
+        M.append(m)
+        
+    print("\n")
+    Final_NT = []
+    NT_by_layers=[]
+    Rads = []
+    Heights = []
+    for i in range(mw):
+        n=N[i]
+        m=M[i]
+        theta, Res = robtainxy(n, m, error=Error)
+        try:
+            x, y, err, perr=Res[0]
+        except IndexError:
+            print("\n***ERROR*** No integer solutions found for translational indices (x,y) in the range x,y<100 when (n,m)=({},{}) \nPlease try another pair of chiral indices.".format(N[i], M[i]))
+            sys.exit()
+        x= round(x)
+        y= round(y)
+        Arr, height, circ, rad = do_everything(n,m,x,y)
+        for ele in Arr:
+            displaced = point3d(0,0,-height,'')+ ele
+            for ele2 in Arr:
+                if distance(displaced, ele2)<0.2:
+                    Arr.remove(ele)
+        NT_by_layers.append(Arr)
+        Rads.append(rad)
+        Heights.append(height)
+        print("Layer {} completed successfully with {} atoms and radius of {:.3f} A.".format(i+1,len(Arr), rad))
+    
+    for i in range(mw):
+        flag=0
+        for j in range(mw):
+            if i==j:
+                continue
+            elif abs(Rads[i]-Rads[j])<=ancho+2.5:
+                print("\n***WARNING*** Radii for layers {} and {} might be too close.".format(i+1,j+1))
+                flag=1
+                break
+        if flag==1:
+            break
+
+
+    ##1.- dont repeat or scale anything
+    ##2.- repeat smaller nts until they reach biggest and cut
+    ##3.- scale smallest to biggest
+    ##4.- get as close as possible and scale (auto, up or down)
+    ##5.- look for supercell (may take time, experimental)
+    print("\nThese are the Nanotube Heights:")
+    print(["{:.3f}".format(h) for h in Heights])
+
+    print("\nScaling options: (more info on README) \n(1): don't scale any layer \n(2): repeat smaller layers until they surpass the biggest, then trim them \n(3): scale all smaller layers to match the height of the biggest \n(4): combination of (3) and (2), repeat smaller layers to get as close to the largest, then scale them up or down to match \n(5) look for supercell that maintains periodicity and original scale (Recommended, defaults to (4) if it doesn't find a supercell).\n")
+    option = int(input("Choose how to scale the nanotubes (type an integer from 1 to 5): "))
+    
+    Final_NT, final_height, max_radius = adjust_layers(option, NT_by_layers, Rads, Heights, mw)
+
+    try:
+        arch_out=args[1]
+    except IndexError:
+        print("\n***No output file specified. \n\t A generic name will be used.***\n")
+        arch_out=False
+
+    if not arch_out:
+        arch_out= "MW_Nanotube_{}layers.xyz".format(mw)
+        
+    with open(arch_out, mode = 'w') as outfile:
+        print(len(Final_NT), file=outfile)
+        print("Multi-Walled NT N={}, M={}. z={} A, R={}.".format(N, M, final_height, Rads), file=outfile)
+        for ele in Final_NT:
+            print("{}    {}    {}    {}".format(ele.ele, ele.x, ele.y, ele.z), file=outfile)
+        print("alat", file=outfile)
+        print("1.0", file=outfile)
+        print("supercell", file=outfile)
+        print("{}\t0.0\t0.0".format(2*max_radius), file=outfile)
+        print("0.0\t{}\t0.0".format(2*max_radius), file=outfile)
+        print("0.0\t0.0\t{}".format(final_height), file=outfile)
+        print("cartesian coordinates", file=outfile)
+    print("Structure saved in file {}\n".format(arch_out))
 
 
 if __name__== "__main__":
@@ -1344,6 +1628,7 @@ if __name__== "__main__":
         print("\t-h / -help / --h \tPrints this help message\n")
         print("\t-VASPin \tDenotes that the input file is in the POSCAR VASP format.\n")
         print("\t-p \t\tPrints atomic positions and unit vectors of the unit cell.\n\t\t\tUseful for checking if the program read \n\t\t\tthe input file correctly.\n")
+        print("\t-mw[<num>] / -multiwalled[<num>]  Multiwalled option. Allows for the \n\t\t\t\t\t  construction of Multiwalled NTs. If <num> is\n\t\t\t\t\t  specified, it determines the number of layers. \n\t\t\t\t\t  Example: '-mw2' would yield a two-layer NT,\n\t\t\t\t\t  while '-mw' allows you to select the number of \n\t\t\t\t\t  layers later.\n")
         print("\t-nr \t\tGives coordinates for the nanoribbon instead of the nanotube.\n")        
         print("\t-E<num> \tChanges the acceptable error when looking for\n\t\t\tinteger solutions to the translational indices (x,y)\n\t\t\tExample: '-E0.05' changes the acceptable error to 0.05.\n\t\t\tAlso changes the error if looking for nanotubes by radius.\n")
         print("\t-radius \tLooks for nanotubes that have a certain radius.\n\t\t\tThe program will ask for the radius desired.\n")
@@ -1383,10 +1668,27 @@ if __name__== "__main__":
         UnitCell[i]=a2+UnitCell[i] #done for the program calculations
     phi= math.acos((a1.x*a2.x+a1.y*a2.y+a1.z*a2.z)/(a1.mag()*a2.mag()))
 
+    mw=None
 
     if "-p" in opts:
         sys.exit()
-    main()
+        
+    for word in opts:
+        if word.startswith("-mw"):
+            if word=="-mw":
+                mw=False
+            else:
+                mw=int(word.strip().replace("-mw",""))
+        elif word.startswith("-multiwalled"):
+            if word=="-multiwalled":
+                mw=False
+            else:
+                mw=int(word.strip().replace("-mw",""))
+    if mw==None:    
+        main()
+    else:
+        ancho = max(UnitCell, key=lambda x: x.z).z-min(UnitCell, key=lambda x: x.z).z
+        multi_main(mw)
 
     
         
