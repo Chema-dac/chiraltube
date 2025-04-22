@@ -13,7 +13,7 @@ Input files should contain the unit cell of a specific 2D material in special .x
 Use option `-h` / `-help` for more help.
 
 ### Now supports Multi-Walled Nanotube generation!
-If you use the option `-mw` you will be prompted for the number of layers to build and then the chiral indices.
+If you use the option `-mw` you will be prompted for the number of layers to build and then the chiral indices (or, alternatively, you can use option `-setrad` to set the radii of each layer, instead of the indices).
 
 Afterwards you will be prompted to select a layer-scaling option, these are explained here in more detail:
 
@@ -21,4 +21,4 @@ Afterwards you will be prompted to select a layer-scaling option, these are expl
 * Option 2: Leaves biggest layer unchanged, all the other layers are repeated along the z-axis to surpass the biggest layer. Then they are trimmed so that they are all the same height. (Recommended if you don't care about periodicity of the full NT)
 * Option 3: Leaves biggest layer unchanged, all other layers are scaled up along the z-axis to match the height of the biggest one. (Recommended if all NT heights are very close to each other)
 * Option 4: Leaves biggest layer unchanged. Combination of option 2 and 3. First repeats the smaller layers along the z-axis to get as close as possible to the biggest height, then scales up or down to match the remaining difference. (Recommended, although it might scale too much in certain cases, losing physical plausibility)
-* Option 5: Only works with two layers for now. Looks for a combination of numbers that, when repeating each layer by its corresponding number, makes both layers get close enough for scaling to be practical. (Recommended in most cases, preserves periodicity while staying close to the original stucture. Might not find a supercell, which makes it default to option 4)
+* Option 5: Only works with two layers for now. Looks for a combination of numbers that, when repeating each layer by its corresponding number, makes both layers get close enough for scaling to be practical. (Recommended in most cases, preserves periodicity while staying close to the original structure. Might not find a supercell, which makes it default to option 4)
