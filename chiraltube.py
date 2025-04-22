@@ -1131,6 +1131,33 @@ def sortfuncT(ele):
     x,y,err,perr=ele
     return distance(point3d(0,0,0,0), a1*x+ a2*y)
 
+def sortfuncR(ele):
+    '''
+    Returns distance between two elements, scaled by the unit cell vectors.
+
+    Parameters
+    ----------
+    ele: list of float
+        Tuple containing four elements, the first two are n and m, with which it calculates
+        x and y which will define the distance.
+
+    Returns
+    -------
+    float
+        Distance scaled by unit cell vectors between x and y.
+
+    See Also
+    --------
+    sortfunc: Returns distance between two elements.
+    
+    '''
+    n,m,err,perr=ele
+    _, Res=robtainxy(n,m)
+    x,y,_,_=Res[0]
+    x=int(x)
+    y=int(y)
+    return distance(point3d(0,0,0,0), a1*x+ a2*y)
+
 def rsearchnm(radius, error=0.1, MAX=100):
     '''
     Looks for nanotubes with radius close to "radius" up to an
@@ -1159,7 +1186,7 @@ def rsearchnm(radius, error=0.1, MAX=100):
             rad_prueba= distance(point3d(0,0,0,0), (a1*n+a2*m))/(2*math.pi)
             if abs(rad_prueba-radius)<error:
                 Res.append((n, m, abs(rad_prueba-radius), abs(rad_prueba-radius)/radius))
-    Res.sort(key=sortfuncT)    
+    Res.sort(key=sortfuncR)    
     return Res
 
 def searchnm(radius, error=0.1, MAX=100):
@@ -1182,9 +1209,9 @@ def searchnm(radius, error=0.1, MAX=100):
     if len(Res)==0:
         print("No nanotube found with a radius {} +- {}. Try increasing the accepted error.".format(radius, error))
     else:
-        print("Results for radius={} +- {}\n\nn,m,\tError,\tRelative error".format(radius, error))
+        print("Results for radius={} +- {}\n\nn,m,\tRadius,\tError,\tRelative error".format(radius, error))
         for ele in Res:
-            print("{},{},\t{},{}".format(ele[0], ele[1], round(ele[2], 6), round(ele[3],6)))
+            print("{},{},\t{}, {}, {}".format(ele[0], ele[1],round(distance(point3d(0,0,0,0), (a1*ele[0]+a2*ele[1]))/(2*math.pi),5), round(ele[2], 5), round(ele[3],5)))
     
 def do_everything(n,m,x,y, nt=True):
     '''
@@ -1313,6 +1340,7 @@ def adjust_layers(option, NT_by_layers, Rads, Heights, mw):
     find_match: returns pair of numbers that fulfill conditions for option 5
     '''
     Final_NT=[]
+    final_height = max(Heights)
     if option==1: ##dont repeat or scale anything
         for i in range(mw):
             Final_NT=Final_NT + NT_by_layers[i]
@@ -1359,17 +1387,18 @@ def adjust_layers(option, NT_by_layers, Rads, Heights, mw):
             Arr2 = repeat(NT_by_layers[Ordered_indices[1]], Heights[Ordered_indices[1]], big-1)
             if diff>=0:
                 print("Re-scaling layer {} by a factor of {:.4f}".format(Ordered_indices[0]+1,big*Heights[Ordered_indices[1]]/(small*Heights[Ordered_indices[0]])))
+                final_height = Heights[Ordered_indices[0]]*small
                 for ele in Arr1:
                     ele.z=ele.z*big*Heights[Ordered_indices[1]]/(small*Heights[Ordered_indices[0]])
             else:
                 print("Re-scaling layer {} by a factor of {:.4f}".format(Ordered_indices[1]+1,small*Heights[Ordered_indices[0]]/(big*Heights[Ordered_indices[1]])))
+                final_height = Heights[Ordered_indices[1]]*big
                 for ele in Arr2:
                     ele.z=ele.z*small*Heights[Ordered_indices[0]]/(big*Heights[Ordered_indices[1]])
             Final_NT=Arr1+Arr2
     else:
         print("\n***ERROR*** scaling options can only be 1,2,3,4 or 5\n")
         sys.exit()
-    final_height = max(Final_NT, key=lambda x: x.z)
     max_radius = max(Rads)
     return Final_NT, final_height, max_radius
             
@@ -1433,6 +1462,7 @@ def main():
     r=0
     Error=ERROR
     indexoption=False
+    radiusoption=False
     
     if "-nr" in opts:
         ribbon=True
@@ -1462,15 +1492,25 @@ def main():
         if word.startswith("-r"):
             r= int(word.strip().replace("-r", ""))
 
+    if "-setrad" in opts:
+        radiusoption=True
+        radius=float(input("\nDesired NT radius: "))
+
     for word in opts:
-        if word.startswith("-indexn"):
+        if word.startswith("-indexn") and not radiusoption:
             n, m = word.strip().replace("-indexn", "").split('m')
             n=int(n)
             m=int(m)
             indexoption=True
             print("Chiral indices read correctly, (n,m)=({},{})".format(n,m))
-            
-    if not indexoption:
+
+    if radiusoption:
+        Res=rsearchnm(radius)
+        n,m,_,_=Res[0]
+        n=int(n)
+        m=int(m)
+        print("\nChiral indices found: (n,m)=({},{}) with radius={:.3f} Angstroms".format(n,m, distance(point3d(0,0,0,0), (a1*n+a2*m))/(2*math.pi)))
+    elif not indexoption:
         n= int(input("\nValue of n: "))
         m= int(input("\nValue of m: "))
     
@@ -1488,7 +1528,7 @@ def main():
     try:
         x, y, err, perr=Res[0]
     except IndexError:
-        print("\n***ERROR*** No integer solutions found for translational indices (x,y) in the range x,y<100 \nPlease try another pair of chiral indices.")
+        print("\n***ERROR*** No integer solutions found for translational indices (x,y) in the range x,y<100 \nPlease try another pair of chiral indices or increase the accepted error.")
         sys.exit()
     x= round(x)
     y= round(y)
@@ -1507,6 +1547,7 @@ def main():
 def multi_main(mw):
     r=0
     Error=ERROR
+    radiusoption=False
     
     
     print("Multi-walled nanotube selected\n")
@@ -1526,14 +1567,24 @@ def multi_main(mw):
     for word in opts:
         if word.startswith("-E"):
             Error= float(word.strip().replace("-E", ""))
+
+    if "-setrad" in opts:
+        radiusoption=True
     
     N=[]
     M=[]
 
     for i in range(mw):
         print("\nLayer number {}".format(i+1))
-        n=int(input("Value of n: "))
-        m=int(input("Value of m: "))
+        if radiusoption:
+            radius=float(input("NT radius: "))
+            Res=rsearchnm(radius)
+            n,m,_,_=Res[0]
+            n=int(n)
+            m=int(m)
+        else:
+            n=int(input("Value of n: "))
+            m=int(input("Value of m: "))
         N.append(n)
         M.append(m)
         
@@ -1634,6 +1685,7 @@ if __name__== "__main__":
         print("\t-radius \tLooks for nanotubes that have a certain radius.\n\t\t\tThe program will ask for the radius desired.\n")
         print("\t-diameter \tSame as above but with diameter.\n")
         print("\t-r<num> \tRepeats the nanotube <num> times along its axis.\n\t\t\t<num> must be an integer.\n\t\t\tExample: '-r3' would yield a nanotube repeated 3 times.\n")
+        print("\t-setrad \tConstructs the nanotube by setting its radius instead\n\t\t\tof the chiral indices. The program will ask for the radius.\n\t\t\tCan be used for multi-walled NTs with the '-mw' option.\n")
         print("\t-indexn<num1>m<num2> \tSets the chiral indices directly from command \n\t\t\t\tline. Sets n=<num1> and m=<num2>.\n\t\t\t\tExample: '-indexn5m10' yields a nanotube \n\t\t\t\twith (n,m)=(5,10)\n")
         print("\t-o \t\tPrints the (x,y) pairs that are solutions for\n\t\t\tthe (n,m) provided.\n")
         print("\t-VASPout \tGives the output file in the POSCAR VASP format.\n")
