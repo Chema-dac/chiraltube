@@ -1,0 +1,13 @@
+2
+BoronNitide
+Si	1.95195	1.1246742	5
+Si	0.0039	2.2493484	5.5
+alat
+1.0
+mass B 0
+mass N 0
+supercell
+3.9 0 0
+-1.95 3.37 0
+0 0 10
+cartesian coordinates

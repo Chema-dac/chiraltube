@@ -1,0 +1,14 @@
+2
+BoronNitride
+N	0.0	1.446   5.0
+B	1.255	0.723	5.0
+alat
+1.0
+mass B 0
+mass N 0
+supercell
+2.51 0 0
+-1.255 2.17 0
+0 0 10
+cartesian coordinates
+
